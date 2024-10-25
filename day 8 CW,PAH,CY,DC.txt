@@ -1,0 +1,366 @@
+day 8
+
+cw1
+
+export const increment = () => ({
+  type: 'INCREMENT',
+});
+
+export const decrement = () => ({
+  type: 'DECREMENT',
+});
+
+const initialState = {
+  count: 0,
+};
+
+const counterReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case 'INCREMENT':
+      return { ...state, count: state.count + 1 };
+    case 'DECREMENT':
+      return { ...state, count: state.count - 1 };
+    default:
+      return state;
+  }
+};
+
+export default counterReducer;
+
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { increment, decrement } from './actions';
+
+const CounterComponent = () => {
+  const count = useSelector((state) => state.count);
+  const dispatch = useDispatch();
+
+  return (
+    <div>
+      <h1>Count: {count}</h1>
+      <button onClick={() => dispatch(increment())}>Increment</button>
+      <button onClick={() => dispatch(decrement())}>Decrement</button>
+    </div>
+  );
+};
+
+export default CounterComponent;
+
+cw2
+
+export const addTodo = (todo) => ({
+  type: 'ADD_TODO',
+  payload: todo,
+});
+
+export const removeTodo = (id) => ({
+  type: 'REMOVE_TODO',
+  payload: id,
+});
+
+
+const initialState = {
+  todos: [],
+};
+
+const todoReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case 'ADD_TODO':
+      return { ...state, todos: [...state.todos, action.payload] };
+    case 'REMOVE_TODO':
+      return { ...state, todos: state.todos.filter((todo) => todo.id !== action.payload) };
+    default:
+      return state;
+  }
+};
+
+export default todoReducer;
+
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addTodo, removeTodo } from './actions';
+
+const TodoComponent = () => {
+  const [inputValue, setInputValue] = useState('');
+  const todos = useSelector((state) => state.todos);
+  const dispatch = useDispatch();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newTodo = { id: Date.now(), text: inputValue };
+    dispatch(addTodo(newTodo));
+    setInputValue('');
+  };
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input value={inputValue} onChange={(e) => setInputValue(e.target.value)} />
+        <button type="submit">Add Todo</button>
+      </form>
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>
+            {todo.text}
+            <button onClick={() => dispatch(removeTodo(todo.id))}>Remove</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default TodoComponent;
+
+pah1
+
+export const login = (username) => ({
+  type: 'LOGIN',
+  payload: username,
+});
+
+export const logout = () => ({
+  type: 'LOGOUT',
+});
+
+const initialState = {
+  isAuthenticated: false,
+  user: null,
+};
+
+const authReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case 'LOGIN':
+      return { ...state, isAuthenticated: true, user: action.payload };
+    case 'LOGOUT':
+      return { ...state, isAuthenticated: false, user: null };
+    default:
+      return state;
+  }
+};
+
+export default authReducer;
+
+
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { login, logout } from './actions';
+
+const AuthComponent = () => {
+  const isAuthenticated = useSelector((state) => state.isAuthenticated);
+  const user = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+
+  const handleLogin = () => {
+    const username = 'JohnDoe';
+    dispatch(login(username));
+  };
+
+  return (
+    <div>
+      {isAuthenticated ? (
+        <>
+          <h1>Welcome, {user}</h1>
+          <button onClick={() => dispatch(logout())}>Logout</button>
+        </>
+      ) : (
+        <>
+          <h1>Please Login</h1>
+          <button onClick={handleLogin}>Login</button>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default AuthComponent;
+
+
+pah2
+import axios from 'axios';
+
+export const fetchData = () => async (dispatch) => {
+  dispatch({ type: 'FETCH_DATA_REQUEST' });
+  try {
+    const response = await axios.get('https://jsonplaceholder.typicode.com/posts');
+    dispatch({ type: 'FETCH_DATA_SUCCESS', payload: response.data });
+  } catch (error) {
+    dispatch({ type: 'FETCH_DATA_FAILURE', error });
+  }
+};
+
+const initialState = {
+  data: [],
+  loading: false,
+  error: null,
+};
+
+const dataReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case 'FETCH_DATA_REQUEST':
+      return { ...state, loading: true };
+    case 'FETCH_DATA_SUCCESS':
+      return { ...state, loading: false, data: action.payload };
+    case 'FETCH_DATA_FAILURE':
+      return { ...state, loading: false, error: action.error };
+    default:
+      return state;
+  }
+};
+
+export default dataReducer;
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchData } from './actions';
+
+const DataComponent = () => {
+  const { data, loading, error } = useSelector((state) => state);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchData());
+  }, [dispatch]);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error loading data.</p>;
+
+  return (
+    <ul>
+      {data.map((item) => (
+        <li key={item.id}>{item.title}</li>
+      ))}
+    </ul>
+  );
+};
+
+export default DataComponent;
+
+
+cy
+
+export const toggleTheme = () => ({
+  type: 'TOGGLE_THEME',
+});
+
+const initialState = {
+  theme: 'light',
+};
+
+const themeReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case 'TOGGLE_THEME':
+      return {
+        ...state,
+        theme: state.theme === 'light' ? 'dark' : 'light',
+      };
+    default:
+      return state;
+  }
+};
+
+export default themeReducer;
+
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleTheme } from './actions';
+
+const ThemeComponent = () => {
+  const theme = useSelector((state) => state.theme);
+  const dispatch = useDispatch();
+
+  return (
+    <div style={{ background: theme === 'light' ? '#fff' : '#333', color: theme === 'light' ? '#000' : '#fff' }}>
+      <h1>Current Theme: {theme}</h1>
+      <button onClick={() => dispatch(toggleTheme())}>Toggle Theme</button>
+    </div>
+  );
+};
+
+export default ThemeComponent;
+
+
+dc
+
+
+
+.filter((item) => item.id !== action.payload) };
+    default:
+      return state;
+  }
+};
+
+export default cartReducer;
+
+
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addItem, removeItem } from './actions';
+
+const CartComponent = () => {
+  const cart = useSelector((state) => state.cart);
+  const dispatch = useDispatch();
+
+  const handleAddItem = () => {
+    const newItem = { id: Date.now(), name: 'Product ' + cart.length };
+    dispatch(addItem(newItem));
+  };
+
+  return (
+    <div>
+      <h1>Shopping Cart</h1>
+      <button onClick={handleAddItem}>Add Item</button>
+      <ul>
+        {cart.map((item) => (
+          <li key={item.id}>
+            {item.name} 
+            <button onClick={() => dispatch(removeItem(item.id))}>Remove</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default CartComponent;
+
+
+import { createStore } from 'redux';
+import { Provider } from 'react-redux';
+import cartReducer from './reducer';
+
+const store = createStore(cartReducer);
+
+const App = () => (
+  <Provider store={store}>
+    <CartComponent />
+  </Provider>
+);
+
+export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

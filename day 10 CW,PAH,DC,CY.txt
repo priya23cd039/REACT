@@ -1,0 +1,396 @@
+day 10
+
+cw1
+
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const FormWithAPI = () => {
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('https://jsonplaceholder.typicode.com/posts', formData);
+      setMessage(`Form submitted successfully! Response: ${JSON.stringify(response.data)}`);
+    } catch (error) {
+      setMessage(`Error submitting form: ${error.message}`);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Submit Form with API</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email"
+        />
+        <button type="submit">Submit</button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
+  );
+};
+
+export default FormWithAPI;
+
+
+cw2
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const ValidatedFormWithAPI = () => {
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.name) newErrors.name = 'Name is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Email is invalid';
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+    } else {
+      try {
+        const response = await axios.post('https://jsonplaceholder.typicode.com/posts', formData);
+        setMessage(`Form submitted successfully! Response: ${JSON.stringify(response.data)}`);
+      } catch (error) {
+        setMessage(`Error submitting form: ${error.message}`);
+      }
+    }
+  };
+
+  return (
+    <div>
+      <h1>Submit Validated Form with API</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
+        {errors.name && <p style={{ color: 'red' }}>{errors.name}</p>}
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email"
+        />
+        {errors.email && <p style={{ color: 'red' }}>{errors.email}</p>}
+        <button type="submit">Submit</button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
+  );
+};
+
+export default ValidatedFormWithAPI;
+
+
+PAH1
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const FormWithAPI = () => {
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('https://jsonplaceholder.typicode.com/posts', formData);
+      setMessage(`Form submitted successfully! Response: ${JSON.stringify(response.data)}`);
+    } catch (error) {
+      setMessage(`Error submitting form: ${error.message}`);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Submit Form with API</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email"
+        />
+        <button type="submit">Submit</button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
+  );
+};
+
+export default FormWithAPI;
+
+
+import React from 'react';
+import { render, fireEvent, screen } from '@testing-library/react';
+import axios from 'axios';
+import FormWithAPI from './FormWithAPI';
+
+// Mock axios post method
+jest.mock('axios');
+
+describe('FormWithAPI Component', () => {
+  it('submits the form and calls the API', async () => {
+    const mockResponse = {
+      data: { name: 'John Doe', email: 'john@example.com' },
+    };
+    axios.post.mockResolvedValueOnce(mockResponse);
+
+    render(<FormWithAPI />);
+    
+    // Simulate user input
+    fireEvent.change(screen.getByPlaceholderText(/name/i), { target: { value: 'John Doe' } });
+    fireEvent.change(screen.getByPlaceholderText(/email/i), { target: { value: 'john@example.com' } });
+    
+    // Simulate form submission
+    fireEvent.click(screen.getByText(/submit/i));
+
+    // Wait for the API call to complete
+    const message = await screen.findByText(/form submitted successfully/i);
+    expect(message).toBeInTheDocument();
+
+    // Verify axios was called with correct data
+    expect(axios.post).toHaveBeenCalledWith('https://jsonplaceholder.typicode.com/posts', {
+      name: 'John Doe',
+      email: 'john@example.com',
+    });
+  });
+
+  it('displays an error message on API failure', async () => {
+    axios.post.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(<FormWithAPI />);
+
+    // Simulate user input
+    fireEvent.change(screen.getByPlaceholderText(/name/i), { target: { value: 'John Doe' } });
+    fireEvent.change(screen.getByPlaceholderText(/email/i), { target: { value: 'john@example.com' } });
+
+    // Simulate form submission
+    fireEvent.click(screen.getByText(/submit/i));
+
+    // Wait for the error message
+    const message = await screen.findByText(/error submitting form/i);
+    expect(message).toBeInTheDocument();
+  });
+});
+
+pah 2
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const FileUploadForm = () => {
+  const [file, setFile] = useState(null);
+  const [message, setMessage] = useState('');
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post('https://jsonplaceholder.typicode.com/posts', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setMessage(`File uploaded successfully! Response: ${JSON.stringify(response.data)}`);
+    } catch (error) {
+      setMessage(`Error uploading file: ${error.message}`);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Upload File</h1>
+      <form onSubmit={handleSubmit}>
+        <input type="file" onChange={handleFileChange} />
+        <button type="submit">Upload</button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
+  );
+};
+
+export default FileUploadForm;
+
+
+CY
+import { useState } from 'react';
+
+const useForm = (initialValues) => {
+  const [values, setValues] = useState(initialValues);
+  const [message, setMessage] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setValues({ ...values, [name]: value });
+  };
+
+  const handleSubmit = async (callback) => {
+    try {
+      await callback(values);
+      setMessage('Form submitted successfully!');
+    } catch (error) {
+      setMessage(`Error submitting form: ${error.message}`);
+    }
+  };
+
+  return {
+    values,
+    handleChange,
+    handleSubmit,
+    message,
+  };
+};
+
+export default useForm;
+import React from 'react';
+import axios from 'axios';
+import useForm from './useForm';
+
+const FormWithCustomHook = () => {
+  const { values, handleChange, handleSubmit, message } = useForm({ name: '', email: '' });
+
+  const submitForm = async (formData) => {
+    await axios.post('https://jsonplaceholder.typicode.com/posts', formData);
+  };
+
+  return (
+    <div>
+      <h1>Submit Form with Custom Hook</h1>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(submitForm); }}>
+        <input
+          type="text"
+          name="name"
+          value={values.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
+        <input
+          type="email"
+          name="email"
+          value={values.email}
+          onChange={handleChange}
+          placeholder="Email"
+        />
+        <button type="submit">Submit</button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
+  );
+};
+
+export default FormWithCustomHook;
+
+
+DC
+import React from 'react';
+import { render, fireEvent, screen } from '@testing-library/react';
+import axios from 'axios';
+import FileUploadForm from './FileUploadForm';
+
+// Mock axios post method
+jest.mock('axios');
+
+describe('FileUploadForm Component', () => {
+  it('uploads a file and calls the API', async () => {
+    const mockResponse = { data: { message: 'File uploaded successfully' } };
+    axios.post.mockResolvedValueOnce(mockResponse);
+
+    render(<FileUploadForm />);
+    
+    // Simulate file input
+    const file = new File(['dummy content'], 'example.txt', { type: 'text/plain' });
+    fireEvent.change(screen.getByLabelText(/file/i), { target: { files: [file] } });
+
+    // Simulate form submission
+    fireEvent.click(screen.getByText(/upload/i));
+
+    // Wait for the success message
+    const message = await screen.findByText(/file uploaded successfully/i);
+    expect(message).toBeInTheDocument();
+
+    // Verify axios was called with the correct data
+    expect(axios.post).toHaveBeenCalledWith('https://jsonplaceholder.typicode.com/posts', expect.any(FormData), {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  });
+
+  it('displays an error message on API failure', async () => {
+    axios.post.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(<FileUploadForm />);
+
+    // Simulate file input
+    const file = new File(['dummy content'], 'example.txt', { type: 'text/plain' });
+    fireEvent.change(screen.getByLabelText(/file/i), { target: { files: [file] } });
+
+    // Simulate form submission
+    fireEvent.click(screen.getByText(/upload/i));
+
+    // Wait for the error message
+    const message = await screen.findByText(/error uploading file/i);
+    expect(message).toBeInTheDocument();
+  });
+});
+
+
+
+
+
+
+

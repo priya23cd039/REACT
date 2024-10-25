@@ -1,0 +1,400 @@
+day 6 cw1
+
+// UserContext.js - Creating a Context
+import React, { createContext, useState } from 'react';
+
+// Create the User context
+export const UserContext = createContext();
+
+// Provider component
+const UserProvider = ({ children }) => {
+  const [user, setUser] = useState({ name: 'Jane Doe', age: 25 });
+
+  const updateUser = (newData) => {
+    setUser((prevUser) => ({ ...prevUser, ...newData }));
+  };
+
+  return (
+    <UserContext.Provider value={{ user, updateUser }}>
+      {children}
+    </UserContext.Provider>
+  );
+};
+
+export default UserProvider;
+
+
+
+// Profile.js - Consuming Context in a Component
+import React, { useContext } from 'react';
+import { UserContext } from './UserContext';
+
+const Profile = () => {
+  const { user, updateUser } = useContext(UserContext);
+
+  const handleUpdate = () => {
+    updateUser({ name: 'John Smith', age: 28 });
+  };
+
+  return (
+    <div>
+      <h2>Profile</h2>
+      <p>Name: {user.name}</p>
+      <p>Age: {user.age}</p>
+      <button onClick={handleUpdate}>Update User</button>
+    </div>
+  );
+};
+
+export default Profile;
+
+// App.js - Wrapping Components in the Provider
+import React from 'react';
+import UserProvider from './UserContext';
+import Profile from './Profile';
+import Dashboard from './Dashboard';
+
+const App = () => {
+  return (
+    <UserProvider>
+      <div>
+        <h1>Welcome to User Dashboard</h1>
+        <Profile />
+        <Dashboard />
+      </div>
+    </UserProvider>
+  );
+};
+
+export default App;
+
+
+
+cw2
+
+
+import React, { useState, useRef, useEffect } from 'react';
+
+const RefExample = () => {
+  const [count, setCount] = useState(0);
+  const inputRef = useRef(null); // To focus input
+  const prevCountRef = useRef(); // To track previous count
+
+  useEffect(() => {
+    // Store the previous value after render
+    prevCountRef.current = count;
+  }, [count]);
+
+  const handleFocus = () => {
+    // Focus the input field using ref
+    inputRef.current.focus();
+  };
+
+  const incrementCount = () => {
+    setCount(count + 1);
+  };
+
+  return (
+    <div>
+      <h2>useRef Example</h2>
+      <div>
+        <p>Current Count: {count}</p>
+        <p>Previous Count: {prevCountRef.current}</p>
+        <button onClick={incrementCount}>Increment Count</button>
+      </div>
+
+      <div>
+        <input ref={inputRef} type="text" placeholder="Focus on me" />
+        <button onClick={handleFocus}>Focus Input</button>
+      </div>
+    </div>
+  );
+};
+
+export default RefExample;
+
+
+PAH 1
+// withAuth.js - HOC for authentication
+import React from 'react';
+
+const withAuth = (WrappedComponent) => {
+  return class extends React.Component {
+    state = {
+      isAuthenticated: false,
+    };
+
+    componentDidMount() {
+      // Mock authentication check
+      const authStatus = localStorage.getItem('authToken');
+      this.setState({ isAuthenticated: !!authStatus });
+    }
+
+    render() {
+      const { isAuthenticated } = this.state;
+
+      if (!isAuthenticated) {
+        return <p>Please login to access this page.</p>;
+      }
+
+      // Render the wrapped component if authenticated
+      return <WrappedComponent {...this.props} />;
+    }
+  };
+};
+
+export default withAuth;
+
+// Dashboard.js - A component wrapped with the HOC
+import React from 'react';
+import withAuth from './withAuth';
+
+const Dashboard = () => {
+  return (
+    <div>
+      <h2>Dashboard</h2>
+      <p>Welcome to your dashboard. You are authenticated.</p>
+    </div>
+  );
+};
+
+export default withAuth(Dashboard);
+// App.js - Using the HOC-wrapped component
+import React from 'react';
+import Dashboard from './Dashboard';
+
+const App = () => {
+  return (
+    <div>
+      <h1>App with HOC Example</h1>
+      <Dashboard />
+    </div>
+  );
+};
+
+export default App;
+
+
+PAH 2
+
+// useFetch.js - Custom Hook to fetch data
+import { useState, useEffect } from 'react';
+
+const useFetch = (url) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        setError(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+};
+
+export default useFetch;
+
+// Posts.js - Using the custom hook
+import React from 'react';
+import useFetch from './useFetch';
+
+const Posts = () => {
+  const { data, loading, error } = useFetch('https://jsonplaceholder.typicode.com/posts');
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error loading posts.</p>;
+
+  return (
+    <div>
+      <h2>Posts</h2>
+      <ul>
+        {data.map((post) => (
+          <li key={post.id}>{post.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Posts;
+
+// App.js - Using the Posts component
+import React from 'react';
+import Posts from './Posts';
+
+const App = () => {
+  return (
+    <div>
+      <h1>Custom Hook Example</h1>
+      <Posts />
+    </div>
+  );
+};
+
+export default App;
+
+CY
+
+// Modal.js - Creating a Modal using React Portals
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './Modal.css'; // Add CSS for modal styling
+
+const Modal = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div className="modal">
+      <div className="modal-content">
+        <button className="modal-close" onClick={onClose}>
+          &times;
+        </button>
+        {children}
+      </div>
+    </div>,
+    document.getElementById('modal-root') // Portal target
+  );
+};
+
+export default Modal;
+
+<!-- index.html - Add a div with id modal-root for the portal -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React Portal Example</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="modal-root"></div> <!-- This is the portal root -->
+  </body>
+</html>
+
+// App.js - Using the Modal component
+import React, { useState } from 'react';
+import Modal from './Modal';
+
+const App = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+
+  return (
+    <div>
+      <h1>React Portals Example</h1>
+      <button onClick={toggleModal}>Open Modal</button>
+
+      <Modal isOpen={isModalOpen} onClose={toggleModal}>
+        <h2>Modal Title</h2>
+        <p>This is a modal rendered using React Portals.</p>
+      </Modal>
+    </div>
+  );
+};
+
+export default App;
+/* Modal.css - Styles for the modal component */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+
+DY
+// ErrorBoundary.js - Creating an Error Boundary
+import React, { Component } from 'react';
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Update state to display fallback UI
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // You can log the error to an error reporting service here
+    console.error('Error caught in error boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h2>Something went wrong.</h2>;
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
+// BuggyComponent.js - A component that intentionally throws an error
+import React from 'react';
+
+const BuggyComponent = () => {
+  throw new Error('Oops! This component crashed.');
+};
+
+export default BuggyComponent;
+
+// App.js - Using the ErrorBoundary to catch errors
+import React from 'react';
+import ErrorBoundary from './ErrorBoundary';
+import BuggyComponent from './BuggyComponent';
+
+const App = () => {
+  return (
+    <div>
+      <h1>Error Boundary Example</h1>
+      <ErrorBoundary>
+        <BuggyComponent />
+      </ErrorBoundary>
+    </div>
+  );
+};
+
+export default App;
+
